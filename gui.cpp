@@ -302,7 +302,12 @@ void MyFrame::OnTimer(wxTimerEvent &event)
 			m_accel[i]->SetLabelText(buf);
 		}
 		for (i=0; i < 3; i++) {
-			snprintf(buf, sizeof(buf), "%.3f", 0.0f); // TODO...
+			float x = 0.0f;
+
+			for (j=0; j < GYROBUFFSIZE; j++)
+			    x += magcal.gyroBuffer[i][j];
+
+			snprintf(buf, sizeof(buf), "%.3f", x / GYROBUFFSIZE);
 			m_gyro[i]->SetLabelText(buf);
 		}
 	} else {
@@ -332,17 +337,21 @@ void MyFrame::OnClear(wxCommandEvent &event)
 
 void MyFrame::OnSendCal(wxCommandEvent &event)
 {
-	/*printf("OnSendCal\n");
+	printf("OnSendCal\n");
 	printf("Magnetic Calibration:   (%.1f%% fit error)\n", magcal.FitError);
-	printf("   %7.2f   %6.3f %6.3f %6.3f\n",
-		magcal.V[0], magcal.invW[0][0], magcal.invW[0][1], magcal.invW[0][2]);
-	printf("   %7.2f   %6.3f %6.3f %6.3f\n",
-		magcal.V[1], magcal.invW[1][0], magcal.invW[1][1], magcal.invW[1][2]);
-	printf("   %7.2f   %6.3f %6.3f %6.3f\n",
-		magcal.V[2], magcal.invW[2][0], magcal.invW[2][1], magcal.invW[2][2]);
-	*/
+
+	printf("HardIronBias=%li,%li,%li\n", 
+	    (long) (magcal.V[0] * 10000), (long) (magcal.V[1] * 10000), (long) (magcal.V[2] * 10000)
+	);
+
+	printf("FusionMatrixMag=%li,%li,%li,%li,%li,%li,%li,%li,%li\n",
+		(long) (magcal.invW[0][0] * 10000), (long) (magcal.invW[0][1] * 10000), (long) (magcal.invW[0][2] * 10000),
+		(long) (magcal.invW[1][0] * 10000), (long) (magcal.invW[1][1] * 10000), (long) (magcal.invW[1][2] * 10000),
+		(long) (magcal.invW[2][0] * 10000), (long) ( magcal.invW[2][1] * 10000), (long) (magcal.invW[2][2] * 10000)
+	);
+
 	m_confirm_icon->SetBitmap(MyBitmap("checkempty.png"));
-	send_calibration();
+	// send_calibration();
 }
 
 void calibration_confirmed(void)
@@ -399,7 +408,7 @@ void MyFrame::OnPortMenu(wxCommandEvent &event)
 	m_port_list->SetSelection(0);
         if (id == 9000) return;
 	raw_data_reset();
-	open_port((const char *)name);
+	open_port((const char *)name.mb_str());
 	m_button_clear->Enable(true);
 }
 
@@ -413,7 +422,7 @@ void MyFrame::OnPortList(wxCommandEvent& event)
 	port_name = name;
 	if (name == "(none)") return;
 	raw_data_reset();
-	open_port((const char *)name);
+	open_port((const char *)name.mb_str());
 	m_button_clear->Enable(true);
 }
 

@@ -14,13 +14,14 @@ void raw_data_reset(void)
 	rawcount = OVERSAMPLE_RATIO;
 	fusion_init();
 	memset(&magcal, 0, sizeof(magcal));
-	magcal.V[2] = 80.0f;  // initial guess
+	magcal.V[2] = -50.0f;  // initial guess
 	magcal.invW[0][0] = 1.0f;
 	magcal.invW[1][1] = 1.0f;
 	magcal.invW[2][2] = 1.0f;
 	magcal.FitError = 100.0f;
 	magcal.FitErrorAge = 100.0f;
-	magcal.B = 50.0f;
+	magcal.B = 1.0f;
+	magcal.gyroBufferIndex = 0;
 }
 
 static int choose_discard_magcal(void)
@@ -121,6 +122,28 @@ static void add_magcal_data(const int16_t *data)
 	magcal.BpFast[1][i] = data[7];
 	magcal.BpFast[2][i] = data[8];
 	magcal.valid[i] = 1;
+
+	Point_t point;
+
+	// R1CBU
+
+	apply_calibration(data[6], data[7], data[8], &point);
+//	printf("%2.5f %2.5f %2.5f\n", point.x, point.y, point.z);
+}
+
+static void add_gyro_data(const int16_t *data)
+{
+    int8_t i = magcal.gyroBufferIndex;
+
+    if (i >= GYROBUFFSIZE) {
+	return;
+    }
+
+    magcal.gyroBuffer[0][i] = data[3];
+    magcal.gyroBuffer[1][i] = data[4];
+    magcal.gyroBuffer[2][i] = data[5];
+
+    magcal.gyroBufferIndex = i + 1;
 }
 
 static int is_float_ok(float actual, float expected)
@@ -198,6 +221,8 @@ void raw_data(const int16_t *data)
 	Point_t point;
 
 	add_magcal_data(data);
+	add_gyro_data(data);
+
 	x = magcal.V[0];
 	y = magcal.V[1];
 	z = magcal.V[2];
@@ -206,7 +231,7 @@ void raw_data(const int16_t *data)
 		y -= magcal.V[1];
 		z -= magcal.V[2];
 		magdiff = sqrtf(x * x + y * y + z * z);
-		//printf("magdiff = %.2f\n", magdiff);
+		// printf("magdiff = %.2f\n", magdiff);
 		if (magdiff > 0.8f) {
 			fusion_init();
 			rawcount = OVERSAMPLE_RATIO;
@@ -216,7 +241,7 @@ void raw_data(const int16_t *data)
 
 	if (force_orientation_counter > 0) {
 		if (--force_orientation_counter == 0) {
-			//printf("delayed forcible orientation reset\n");
+			// printf("delayed forcible orientation reset\n");
 			fusion_init();
 			rawcount = OVERSAMPLE_RATIO;
 		}

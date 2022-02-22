@@ -31,16 +31,17 @@
 
 
 #if defined(LINUX)
-  #define PORT "/dev/ttyACM0"
+  #define PORT "/dev/ttyUSB0"
 #elif defined(WINDOWS)
   #define PORT "COM3"
 #elif defined(MACOSX)
   #define PORT "/dev/cu.usbmodemfd132"
 #endif
 
-#define TIMEOUT_MSEC 14
+#define TIMEOUT_MSEC 10
 
 #define MAGBUFFSIZE 650 // Freescale's lib needs at least 392
+#define GYROBUFFSIZE 100
 
 #ifdef __cplusplus
 extern "C"{
@@ -106,6 +107,8 @@ typedef struct {
     int16_t BpFast[3][MAGBUFFSIZE];   // uncalibrated magnetometer readings
     int8_t  valid[MAGBUFFSIZE];        // 1=has data, 0=empty slot
     int16_t MagBufferCount;           // number of magnetometer readings
+    int16_t gyroBuffer[3][GYROBUFFSIZE];
+    int8_t gyroBufferIndex;
 } MagCalibration_t;
 
 extern MagCalibration_t magcal;
@@ -123,12 +126,14 @@ void fmatrixAeqInvA(float *A[], int8_t iColInd[], int8_t iRowInd[], int8_t iPivo
 void fmatrixAeqRenormRotA(float A[][3]);
 
 
-#define SENSORFS 100
+#define SENSORFS 10
 #define OVERSAMPLE_RATIO 4
 
 
 // accelerometer sensor structure definition
-#define G_PER_COUNT 0.0001220703125F  // = 1/8192
+
+#define G_PER_COUNT 0.000244141F  // 8G
+
 typedef struct
 {
 	float Gp[3];           // slow (typically 25Hz) averaged readings (g)
@@ -136,7 +141,7 @@ typedef struct
 } AccelSensor_t;
 
 // magnetometer sensor structure definition
-#define UT_PER_COUNT 0.1F
+#define UT_PER_COUNT 0.1f
 typedef struct
 {
 	float Bc[3];           // slow (typically 25Hz) averaged calibrated readings (uT)
@@ -144,7 +149,7 @@ typedef struct
 } MagSensor_t;
 
 // gyro sensor structure definition
-#define DEG_PER_SEC_PER_COUNT 0.0625F  // = 1/16
+#define DEG_PER_SEC_PER_COUNT 0.0038110F // 125 DPS
 typedef struct
 {
 	float Yp[3];                           // raw gyro sensor output (deg/s)

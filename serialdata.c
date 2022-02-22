@@ -1,4 +1,5 @@
 #include "imuread.h"
+#include <jansson.h>
 
 
 void print_data(const char *name, const unsigned char *data, int len)
@@ -349,11 +350,118 @@ fail:
 	return 0;
 }
 
+static char	json_buf[1024 * 4];
+static int	json_len = 0;
+static int	json_stat = 0;
+
+static void json_add(json_t *value) {
+    int16_t json_raw_data[9];
+
+    memset(json_raw_data, 0, sizeof(json_raw_data));
+
+    json_t	*acc = json_object_get(value, "IMU_ACC");
+    json_t	*gyr = json_object_get(value, "IMU_GYR");
+    json_t	*mag = json_object_get(value, "IMU_MAG");
+
+    if (acc) {
+	if (json_is_array(acc) && json_array_size(acc) == 3) {
+	    size_t	i;
+	    json_t	*val;
+
+	    json_array_foreach(acc, i, val) {
+		json_raw_data[i] = json_integer_value(val);
+		json_decref(val);
+	    }
+	}
+	json_decref(acc);
+    }
+
+    if (gyr) {
+	if (json_is_array(gyr) && json_array_size(gyr) == 3) {
+	    size_t	i;
+	    json_t	*val;
+
+	    json_array_foreach(gyr, i, val) {
+		json_raw_data[i + 3] = json_integer_value(val);
+		json_decref(val);
+	    }
+	}
+	json_decref(gyr);
+    }
+
+    if (mag) {
+	if (json_is_array(mag) && json_array_size(mag) == 3) {
+	    size_t	i;
+	    json_t	*val;
+
+	    json_array_foreach(mag, i, val) {
+		json_raw_data[i + 6] = json_integer_value(val);
+		json_decref(val);
+	    }
+	}
+	json_decref(mag);
+    }
+
+    raw_data(json_raw_data);
+}
+
+static int json_parse(const unsigned char *data, int len) {
+	char	*start;
+	char	*stop;
+
+	if (json_stat == 0) {
+	    start = memchr(data, '*', len);
+
+	    if (start) {
+		start++;
+		len--;
+		memcpy(json_buf, start, len);
+		json_len = len;
+		json_stat = 1;
+	    }
+	    return;
+	}
+
+	if (json_stat > 0) {
+	    memcpy(json_buf + json_len, data, len);
+	    json_len += len;
+	    stop = memchr(json_buf, '*', json_len);
+
+	    if (stop) {
+		*stop = 0;
+		stop++;
+
+		json_error_t	error;
+		json_t		*obj = json_loads(json_buf, 0, &error);
+
+		if (obj) {
+		    if (json_is_object(obj)) {
+			const char	*key;
+			json_t		*value;
+
+			json_object_foreach(obj, key, value) {
+			    if (strcmp(key, "msg_type") != 0) {
+				json_add(value);
+			    }
+			    json_decref(value);
+			}
+		    }
+		    json_decref(obj);
+		}
+
+		json_len -= stop - json_buf;
+
+		for (int i = 0; i < json_len; i++)
+		    json_buf[i] = *stop++;
+	    }
+	}
+}
 
 static void newdata(const unsigned char *data, int len)
 {
-	packet_parse(data, len);
-	ascii_parse(data, len);
+	// packet_parse(data, len);
+	// ascii_parse(data, len);
+	json_parse(data, len);
 	// TODO: learn which one and skip the other
 }
 

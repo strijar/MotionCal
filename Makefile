@@ -8,10 +8,10 @@ ALL = MotionCal imuread
 CC = gcc
 CXX = g++
 CFLAGS = -O2 -Wall -D$(OS)
-WXCONFIG = ~/wxwidgets/3.0.2.gtk2-opengl/bin/wx-config
+WXCONFIG = wx-config
 WXFLAGS = `$(WXCONFIG) --cppflags`
 CXXFLAGS = $(CFLAGS) `$(WXCONFIG) --cppflags`
-LDFLAGS =
+LDFLAGS = -ljansson
 SFLAG = -s
 CLILIBS = -lglut -lGLU -lGL -lm
 MAKEFLAGS = --jobs=12
@@ -66,7 +66,7 @@ IMGS = checkgreen.png checkempty.png checkemptygray.png
 all: $(ALL)
 
 MotionCal: gui.o portlist.o images.o $(OBJS)
-	$(CXX) $(SFLAG) $(CFLAGS) $(LDFLAGS) -o $@ $^ `$(WXCONFIG) --libs all,opengl`
+	$(CXX) $(SFLAG) $(CFLAGS) $(LDFLAGS) -o $@ $^ `$(WXCONFIG) --libs all,opengl` -lGL -lGLU -lglut
 
 MotionCal.exe: resource.o gui.o portlist.o images.o $(OBJS)
 	$(CXX) $(SFLAG) $(CFLAGS) $(LDFLAGS) -o $@ $^ `$(WXCONFIG) --libs all,opengl`
