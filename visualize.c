@@ -23,15 +23,33 @@ static void quad_to_rotation(const Quaternion_t *quat, float *rmatrix)
 	float qx = quat->q1;
 	float qy = quat->q2;
 	float qz = quat->q3;
-	rmatrix[0] = 1.0f - 2.0f * qy * qy - 2.0f * qz * qz;
-	rmatrix[1] = 2.0f * qx * qy - 2.0f * qz * qw;
-	rmatrix[2] = 2.0f * qx * qz + 2.0f * qy * qw;
-	rmatrix[3] = 2.0f * qx * qy + 2.0f * qz * qw;
-	rmatrix[4] = 1.0f  - 2.0f * qx * qx - 2.0f * qz * qz;
-	rmatrix[5] = 2.0f * qy * qz - 2.0f * qx * qw;
-	rmatrix[6] = 2.0f * qx * qz - 2.0f * qy * qw;
-	rmatrix[7] = 2.0f * qy * qz + 2.0f * qx * qw;
-	rmatrix[8] = 1.0f  - 2.0f * qx * qx - 2.0f * qy * qy;
+
+	rmatrix[0] = 1.0f - 2.0f * qy * qy - 2.0f * qz * qz;        // [0][0]
+	rmatrix[1] = 2.0f * qx * qy - 2.0f * qz * qw;               // [0][1]
+	rmatrix[2] = 2.0f * qx * qz + 2.0f * qy * qw;               // [0][2]
+
+	rmatrix[3] = 2.0f * qx * qy + 2.0f * qz * qw;               // [1][0]
+	rmatrix[4] = 1.0f  - 2.0f * qx * qx - 2.0f * qz * qz;       // [1][1]
+	rmatrix[5] = 2.0f * qy * qz - 2.0f * qx * qw;               // [1][2]
+
+	rmatrix[6] = 2.0f * qx * qz - 2.0f * qy * qw;               // [2][0]
+	rmatrix[7] = 2.0f * qy * qz + 2.0f * qx * qw;               // [2][1]
+	rmatrix[8] = 1.0f  - 2.0f * qx * qx - 2.0f * qy * qy;       // [2][2]
+	
+	static int count = 0;
+	
+	if (count++ > 10) {
+	    count = 0;
+	    
+	    float roll = atan2f(rmatrix[7], rmatrix[8]) * (180.0f / M_PI);
+	    float pitch = (0.5f * M_PI - acosf(-rmatrix[6])) * (180.0f / M_PI);
+	    float yaw = -atan2f(rmatrix[3], rmatrix[0]) * (180.0f / M_PI);
+
+        if (yaw < 0.0f)
+            yaw += 360.0f;
+
+        printf("roll:%.1f pitch:%.1f yaw:%.1f\n", roll, pitch, yaw);
+    }
 }
 
 static void rotate(const Point_t *in, Point_t *out, const float *rmatrix)
