@@ -126,13 +126,13 @@ void fmatrixAeqInvA(float *A[], int8_t iColInd[], int8_t iRowInd[], int8_t iPivo
 void fmatrixAeqRenormRotA(float A[][3]);
 
 
-#define SENSORFS 10
-#define OVERSAMPLE_RATIO 4
+#define SENSORFS 50
+#define OVERSAMPLE_RATIO 20
 
 
 // accelerometer sensor structure definition
 
-#define G_PER_COUNT 0.000244141F  // 8G
+#define G_PER_COUNT (2.0f / 32768.0f)
 
 typedef struct
 {
@@ -149,7 +149,9 @@ typedef struct
 } MagSensor_t;
 
 // gyro sensor structure definition
-#define DEG_PER_SEC_PER_COUNT 0.0038110F // 125 DPS
+
+#define DEG_PER_SEC_PER_COUNT (245.0f / 32768.0f)
+
 typedef struct
 {
 	float Yp[3];                           // raw gyro sensor output (deg/s)

@@ -34,7 +34,6 @@
 
 #include "imuread.h"
 
-#define FXOS8700_UTPERCOUNT  0.1f
 #define DEFAULTB 50.0F				// default geomagnetic field (uT)
 #define X 0                         // vector components
 #define Y 1
@@ -44,8 +43,8 @@
 #define MINMEASUREMENTS4CAL 40      // minimum number of measurements for 4 element calibration
 #define MINMEASUREMENTS7CAL 100     // minimum number of measurements for 7 element calibration
 #define MINMEASUREMENTS10CAL 150    // minimum number of measurements for 10 element calibration
-#define MINBFITUT 22.0F             // minimum geomagnetic field B (uT) for valid calibration
-#define MAXBFITUT 67.0F             // maximum geomagnetic field B (uT) for valid calibration
+#define MINBFITUT 2.0F             // minimum geomagnetic field B (uT) for valid calibration
+#define MAXBFITUT 670.0F             // maximum geomagnetic field B (uT) for valid calibration
 #define FITERRORAGINGSECS 7200.0F   // 2 hours: time for fit error to increase (age) by e=2.718
 
 static void fUpdateCalibration4INV(MagCalibration_t *MagCal);
@@ -144,7 +143,7 @@ static void fUpdateCalibration4INV(MagCalibration_t *MagCal)
 	int8_t iPivot[4];
 
 	// compute fscaling to reduce multiplications later
-	fscaling = FXOS8700_UTPERCOUNT / DEFAULTB;
+	fscaling = UT_PER_COUNT / DEFAULTB;
 
 	// the trial inverse soft iron matrix invW always equals
 	// the identity matrix for 4 element calibration
@@ -278,7 +277,7 @@ static void fUpdateCalibration4INV(MagCalibration_t *MagCal)
 	// correct the hard iron estimate for FMATRIXSCALING and the offsets applied (result in uT)
 	for (k = X; k <= Z; k++) {
 		MagCal->trV[k] = MagCal->trV[k] * DEFAULTB
-			+ (float)iOffset[k] * FXOS8700_UTPERCOUNT;
+			+ (float)iOffset[k] * UT_PER_COUNT;
 	}
 
 	// correct the geomagnetic field strength B to correct scaling (result in uT)
@@ -305,7 +304,7 @@ static void fUpdateCalibration7EIG(MagCalibration_t *MagCal)
 	int i, j, k, m, n;			// loop counters
 
 	// compute fscaling to reduce multiplications later
-	fscaling = FXOS8700_UTPERCOUNT / DEFAULTB;
+	fscaling = UT_PER_COUNT / DEFAULTB;
 
 	// the offsets are guaranteed to be set from the first element but to avoid compiler error
 	iOffset[X] = iOffset[Y] = iOffset[Z] = 0;
@@ -419,7 +418,7 @@ static void fUpdateCalibration7EIG(MagCalibration_t *MagCal)
 	f3x3matrixAeqI(MagCal->trinvW);
 	for (k = X; k <= Z; k++) {
 		MagCal->trinvW[k][k] = sqrtf(fabs(MagCal->A[k][k]));
-		MagCal->trV[k] = MagCal->trV[k] * DEFAULTB + (float)iOffset[k] * FXOS8700_UTPERCOUNT;
+		MagCal->trV[k] = MagCal->trV[k] * DEFAULTB + (float)iOffset[k] * UT_PER_COUNT;
 	}
 }
 
@@ -438,7 +437,7 @@ static void fUpdateCalibration10EIG(MagCalibration_t *MagCal)
 	int i, j, k, m, n;			// loop counters
 
 	// compute fscaling to reduce multiplications later
-	fscaling = FXOS8700_UTPERCOUNT / DEFAULTB;
+	fscaling = UT_PER_COUNT / DEFAULTB;
 
 	// the offsets are guaranteed to be set from the first element but to avoid compiler error
 	iOffset[X] = iOffset[Y] = iOffset[Z] = 0;
@@ -565,7 +564,7 @@ static void fUpdateCalibration10EIG(MagCalibration_t *MagCal)
 	// correct for the measurement matrix offset and scaling and
 	// get the computed hard iron offset in uT
 	for (k = X; k <= Z; k++) {
-		MagCal->trV[k] = MagCal->trV[k] * DEFAULTB + (float)iOffset[k] * FXOS8700_UTPERCOUNT;
+		MagCal->trV[k] = MagCal->trV[k] * DEFAULTB + (float)iOffset[k] * UT_PER_COUNT;
 	}
 
 	// convert the trial geomagnetic field strength B into uT for

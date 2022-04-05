@@ -14,7 +14,7 @@ void raw_data_reset(void)
 	rawcount = OVERSAMPLE_RATIO;
 	fusion_init();
 	memset(&magcal, 0, sizeof(magcal));
-	magcal.V[2] = -50.0f;  // initial guess
+	magcal.V[2] = 0.0f;  // initial guess
 	magcal.invW[0][0] = 1.0f;
 	magcal.invW[1][1] = 1.0f;
 	magcal.invW[2][2] = 1.0f;
