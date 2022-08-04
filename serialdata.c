@@ -539,7 +539,7 @@ int write_serial_data(const void *ptr, int len)
 	fd_set wfds;
 	struct timeval tv;
 
-	//printf("Write %d\n", len);
+	// printf("Write %d\n", len);
 	if (portfd < 0) return -1;
 	while (written < len) {
 		n = write(portfd, (const char *)ptr + written, len - written);

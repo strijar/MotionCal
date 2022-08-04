@@ -394,13 +394,17 @@ void MyFrame::OnShowPortList(wxCommandEvent& event)
 	}
 }
 
+static const char cmd_off[] = "send raw off\nsend raw off\nsend raw off\n";
+static const char cmd_on[] = "send raw on\nsend raw on\nsend raw on\n";
 
 void MyFrame::OnPortMenu(wxCommandEvent &event)
 {
         int id = event.GetId();
         wxString name = m_port_menu->FindItem(id)->GetItemLabelText();
 
+//	write_serial_data(cmd_off, strlen(cmd_off));
 	close_port();
+
         //printf("OnPortMenu, id = %d, name = %s\n", id, (const char *)name);
 	port_name = name;
 	m_port_list->Clear();
@@ -409,20 +413,25 @@ void MyFrame::OnPortMenu(wxCommandEvent &event)
         if (id == 9000) return;
 	raw_data_reset();
 	open_port((const char *)name.mb_str());
+	write_serial_data(cmd_on, strlen(cmd_on));
 	m_button_clear->Enable(true);
 }
 
 void MyFrame::OnPortList(wxCommandEvent& event)
 {
+
 	int selected = m_port_list->GetSelection();
 	if (selected == wxNOT_FOUND) return;
 	wxString name = m_port_list->GetString(selected);
 	//printf("OnPortList, %s\n", (const char *)name);
+	write_serial_data(cmd_off, strlen(cmd_off));
 	close_port();
+
 	port_name = name;
 	if (name == "(none)") return;
 	raw_data_reset();
 	open_port((const char *)name.mb_str());
+	write_serial_data(cmd_on, strlen(cmd_on));
 	m_button_clear->Enable(true);
 }
 
